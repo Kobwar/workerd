@@ -52,6 +52,7 @@ public:
   class AlarmEventInfo;
   class QueueEventInfo;
   class EmailEventInfo;
+  class TraceEventInfo;
   class CustomEventInfo;
 
   explicit TraceItem(jsg::Lock& js, const Trace& trace);
@@ -61,6 +62,7 @@ public:
                     jsg::Ref<AlarmEventInfo>,
                     jsg::Ref<QueueEventInfo>,
                     jsg::Ref<EmailEventInfo>,
+                    jsg::Ref<TraceEventInfo>,
                     jsg::Ref<CustomEventInfo>> EventInfo;
   kj::Maybe<EventInfo> getEvent(jsg::Lock& js);
   kj::Maybe<double> getEventTimestamp();
@@ -266,6 +268,36 @@ private:
   uint32_t rawSize;
 };
 
+class TraceItem::TraceEventInfo final: public jsg::Object {
+public:
+  class TraceItem;
+
+  explicit TraceEventInfo(const Trace& trace, const Trace::TraceEventInfo& eventInfo);
+
+  kj::Array<jsg::Ref<TraceItem>> getTraces();
+
+  JSG_RESOURCE_TYPE(TraceEventInfo) {
+    JSG_LAZY_READONLY_INSTANCE_PROPERTY(traces, getTraces);
+  }
+
+private:
+  kj::Array<jsg::Ref<TraceItem>> traces;
+};
+
+class TraceItem::TraceEventInfo::TraceItem final: public jsg::Object {
+public:
+  explicit TraceItem(const Trace::TraceEventInfo::TraceItem& traceItem);
+
+  kj::Maybe<kj::StringPtr> getScriptName();
+
+  JSG_RESOURCE_TYPE(TraceItem) {
+    JSG_LAZY_READONLY_INSTANCE_PROPERTY(scriptName, getScriptName);
+  }
+
+private:
+  kj::Maybe<kj::String> scriptName;
+};
+
 class TraceItem::CustomEventInfo final: public jsg::Object {
 public:
   explicit CustomEventInfo(const Trace& trace, const Trace::CustomEventInfo& eventInfo);
@@ -401,6 +433,8 @@ private:
   api::TraceItem::ScheduledEventInfo,         \
   api::TraceItem::QueueEventInfo,             \
   api::TraceItem::EmailEventInfo,             \
+  api::TraceItem::TraceEventInfo,             \
+  api::TraceItem::TraceEventInfo::TraceItem,  \
   api::TraceItem::FetchEventInfo,             \
   api::TraceItem::FetchEventInfo::Request,    \
   api::TraceItem::FetchEventInfo::Response,   \
